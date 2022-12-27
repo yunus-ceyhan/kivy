@@ -237,6 +237,7 @@ class EventLoopBase(EventDispatcher):
 
     def remove_android_splash(self, *args):
         '''Remove android presplash in SDL2 bootstrap.'''
+        """
         try:
             from android import remove_presplash
             remove_presplash()
@@ -245,6 +246,8 @@ class EventLoopBase(EventDispatcher):
                 'Base: Failed to import "android" module. '
                 'Could not remove android presplash.')
             return
+        """
+        pass
 
     def post_dispatch_input(self, etype, me):
         '''This function is called by :meth:`EventLoopBase.dispatch_input()`

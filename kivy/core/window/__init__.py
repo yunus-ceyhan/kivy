@@ -1988,16 +1988,17 @@ class WindowBase(EventDispatcher):
         # Consume the event and tell Android to pause.
         # TODO If just CMD+w is pressed, only the window should be closed.
         is_osx = platform == 'darwin'
-        if key == 27 and platform == 'android':
-            from android import mActivity
-            mActivity.moveTaskToBack(True)
-            return True
-        elif WindowBase.on_keyboard.exit_on_escape:
+        if WindowBase.on_keyboard.exit_on_escape:
             if key == 27 or all([is_osx, key in [113, 119], modifier == 1024]):
                 if not self.dispatch('on_request_close', source='keyboard'):
-                    stopTouchApp()
-                    self.close()
-                    return True
+                    if platform == 'android':
+                        from android import mActivity
+                        mActivity.moveTaskToBack(True)
+                        return True
+                    else:
+                        stopTouchApp()
+                        self.close()
+                        return True
 
     if Config:
         on_keyboard.exit_on_escape = Config.getboolean(
