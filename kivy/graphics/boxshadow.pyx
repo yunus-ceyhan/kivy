@@ -80,6 +80,8 @@ float sigmoid(float x) {
 }
 
 void main (void) {
+    vec4 texture = texture2D(texture0, tex_coord0);
+
     float distShadow = 0.0;
     if (blur_radius > 0.0) {
         distShadow = sigmoid(
@@ -89,15 +91,13 @@ void main (void) {
             );
     }
 
-    vec4 texture = texture2D(texture0, tex_coord0);
     vec4 shadow = vec4(frag_color.rgb, 1.0 - distShadow) * (frag_color.a * 2.0);
-    
-    if (texture == vec4(0.0)) {
-        gl_FragColor = shadow;
-    } else {
-        gl_FragColor = texture * shadow;
-    }
 
+    if (frag_color.a > 0.0) {
+        gl_FragColor = mix(texture, shadow, 1.0);
+    } else {
+        gl_FragColor = texture;
+    }
 }
 
 
