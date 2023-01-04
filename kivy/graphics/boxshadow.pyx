@@ -91,10 +91,14 @@ void main (void) {
 
     vec4 texture = texture2D(texture0, tex_coord0);
     vec4 shadow = vec4(frag_color.rgb, 1.0 - distShadow) * (frag_color.a * 2.0);
+    
+    if (texture == vec4(0.0)) {
+        gl_FragColor = shadow;
+    } else {
+        gl_FragColor = texture * shadow;
+    }
 
-    gl_FragColor = mix(texture, shadow, 1.0);
 }
-
 
 
 """
