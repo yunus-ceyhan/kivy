@@ -59,20 +59,14 @@ cdef str SHADOW_fs = """
 precision highp float;
 #endif
 
-/* Outputs from the vertex shader */
 varying vec4 frag_color;
 varying vec2 tex_coord0;
-/* uniform texture samplers */
+
 uniform sampler2D texture0;
 
 uniform float blur_radius;
 uniform vec4 border_radius;
 uniform vec2 size;
-
-// References:
-// https://www.shadertoy.com/view/3tj3Dm
-// https://www.shadertoy.com/view/NtVSW1
-// https://iquilezles.org/articles/distfunctions2d/
 
 float roundedBoxSDF(vec2 pos, vec2 size, vec4 radius){
     vec2 s = step(pos, vec2(0.0));
@@ -85,25 +79,24 @@ float sigmoid(float x) {
     return 1.0 / (1.0 + exp(-x));
 }
 
-void main (void){
+void main (void) {
+    float distShadow = 0.0;
+    if (max(1.0, blur_radius) > 0.0) {
+        distShadow = sigmoid(
+            roundedBoxSDF(
+                tex_coord0 * size - size/2.0, size/2.0 - blur_radius * 1.5 - vec2(2.0),
+                border_radius) / (max(1.0, blur_radius)/4.0
+            )
+        );
+    }
 
-float distShadow = sigmoid(
-    roundedBoxSDF(
-        tex_coord0 * size - size/2.0, size/2.0 - blur_radius * 1.5 - vec2(2.0),
-        border_radius) / (max(1.0, blur_radius)/4.0
-    )
-);
+    vec4 texture = texture2D(texture0, tex_coord0);
+    vec4 shadow = vec4(frag_color.rgb, 1.0 - distShadow) * (frag_color.a * 2.0);
 
-
-// Some devices require the resulting color to be blended with the texture.
-// Otherwise there will be a compilation issue.
-
-vec4 texture = texture2D(texture0, tex_coord0);
-vec4 shadow = vec4(frag_color.rgb, 1.0 - distShadow) * (frag_color.a * 2.0);
-
-gl_FragColor = mix(texture, shadow, 1.0);
-
+    gl_FragColor = mix(texture, shadow, 1.0);
 }
+
+
 """
 
 
