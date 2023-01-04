@@ -81,13 +81,12 @@ float sigmoid(float x) {
 
 void main (void) {
     float distShadow = 0.0;
-    if (max(1.0, blur_radius) > 0.0) {
+    if (blur_radius > 0.0) {
         distShadow = sigmoid(
             roundedBoxSDF(
                 tex_coord0 * size - size/2.0, size/2.0 - blur_radius * 1.5 - vec2(2.0),
-                border_radius) / (max(1.0, blur_radius)/4.0
-            )
-        );
+                border_radius) / (blur_radius/4.0)
+            );
     }
 
     vec4 texture = texture2D(texture0, tex_coord0);
@@ -95,6 +94,7 @@ void main (void) {
 
     gl_FragColor = mix(texture, shadow, 1.0);
 }
+
 
 
 """
