@@ -226,6 +226,10 @@ cdef extern from "SDL.h":
         SDL_WINDOWEVENT_FOCUS_LOST     #< Window has lost keyboard focus */
         SDL_WINDOWEVENT_CLOSE          #< The window manager requests that the
                                         # window be closed */
+        SDL_WINDOWEVENT_TAKE_FOCUS     #< Window is being offered a focus (should SetWindowInputFocus() on itself or a subwindow, or ignore) */
+        SDL_WINDOWEVENT_HIT_TEST       #< Window had a hit test that wasn't SDL_HITTEST_NORMAL */
+        SDL_WINDOWEVENT_ICCPROF_CHANGED # [Added in SDL 2.0.18] < The ICC profile of the window's display has changed. */
+        SDL_WINDOWEVENT_DISPLAY_CHANGED # [Added in SDL 2.0.18] < Window has been moved to display data1. */
 
     ctypedef enum SDL_HintPriority:
         SDL_HINT_DEFAULT
@@ -548,6 +552,7 @@ cdef extern from "SDL.h":
     cdef SDL_GLContext SDL_GL_CreateContext(SDL_Window* window)
     cdef int SDL_GetNumVideoDisplays()
     cdef int SDL_GetNumDisplayModes(int displayIndex)
+    cdef int SDL_GetDisplayDPI(int displayIndex, float * ddpi, float * hdpi, float * vdpi);
     cdef int SDL_GetDisplayMode(int displayIndex, int index, SDL_DisplayMode * mode)
     cdef SDL_bool SDL_HasIntersection(SDL_Rect * A, SDL_Rect * B) nogil
     cdef SDL_bool SDL_IntersectRect(SDL_Rect * A, SDL_Rect * B, SDL_Rect * result) nogil
@@ -597,6 +602,7 @@ cdef extern from "SDL.h":
     cdef void SDL_GetWindowSize(SDL_Window * window, int *w, int *h)
     cdef void SDL_SetWindowMinimumSize(SDL_Window * window, int min_w, int min_h)
     cdef void SDL_SetWindowBordered(SDL_Window * window, SDL_bool bordered)
+    cdef void SDL_SetWindowAlwaysOnTop(SDL_Window * window, SDL_bool on_top)
     cdef void SDL_ShowWindow(SDL_Window * window)
     cdef int SDL_ShowCursor(int toggle)
     cdef void SDL_SetCursor(SDL_Cursor * cursor)
@@ -749,6 +755,8 @@ cdef extern from "SDL_ttf.h":
     cdef void  TTF_SetFontStyle(TTF_Font *font, int style)
     cdef int  TTF_GetFontOutline( TTF_Font *font)
     cdef void  TTF_SetFontOutline(TTF_Font *font, int outline)
+    cdef int TTF_SetFontDirection(TTF_Font *font, int direction)
+    cdef int TTF_SetFontScriptName(TTF_Font *font, const char *script)
 
     #Set and retrieve FreeType hinter settings */
     ##define TTF_HINTING_NORMAL    0
@@ -761,6 +769,11 @@ cdef extern from "SDL_ttf.h":
     cdef int TTF_HINTING_NONE
     cdef int  TTF_GetFontHinting( TTF_Font *font)
     cdef void  TTF_SetFontHinting(TTF_Font *font, int hinting)
+
+    cdef int TTF_DIRECTION_LTR
+    cdef int TTF_DIRECTION_RTL
+    cdef int TTF_DIRECTION_TTB
+    cdef int TTF_DIRECTION_BTT
 
     #Get the total height of the font - usually equal to point size
     cdef int  TTF_FontHeight( TTF_Font *font)

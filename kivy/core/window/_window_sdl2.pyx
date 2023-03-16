@@ -266,6 +266,13 @@ cdef class _WindowSDL2Storage:
         SDL_GetWindowSize(self.win, &w, &h)
         return w, h
 
+
+    def _get_display_dpi(self):
+        cdef int display_index = SDL_GetWindowDisplayIndex(self.win)
+        cdef float horizontal_dpi = 0.
+        SDL_GetDisplayDPI(display_index, NULL, &horizontal_dpi, NULL)
+        return horizontal_dpi
+
     def _set_cursor_state(self, value):
         SDL_ShowCursor(value)
 
@@ -339,6 +346,9 @@ cdef class _WindowSDL2Storage:
     def set_minimum_size(self, w, h):
         SDL_SetWindowMinimumSize(self.win, w, h)
 
+    def set_always_on_top(self, always_on_top):
+        SDL_SetWindowAlwaysOnTop(self.win, SDL_TRUE if always_on_top else SDL_FALSE)
+
     def set_allow_screensaver(self, allow_screensaver):
         if allow_screensaver:
             SDL_EnableScreenSaver()
@@ -370,8 +380,8 @@ cdef class _WindowSDL2Storage:
             mode = SDL_WINDOW_FULLSCREEN
         else:
             mode = False
-        IF not USE_IOS:
-            SDL_SetWindowFullscreen(self.win, mode)
+
+        SDL_SetWindowFullscreen(self.win, mode)
 
     def set_window_title(self, title):
         SDL_SetWindowTitle(self.win, <bytes>title.encode('utf-8'))
@@ -715,6 +725,11 @@ cdef class _WindowSDL2Storage:
             elif event.window.event == SDL_WINDOWEVENT_MOVED:
                 action = (
                     'windowmoved',
+                    event.window.data1, event.window.data2
+                )
+            elif event.window.event == SDL_WINDOWEVENT_DISPLAY_CHANGED:
+                action = (
+                    'windowdisplaychanged',
                     event.window.data1, event.window.data2
                 )
             else:

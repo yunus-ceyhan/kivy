@@ -16,11 +16,11 @@ jobs:
     # we need examples wheel for tests, but only windows actually uploads kivy-examples to pypi/server
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.x
       - name: Install dependencies
         run: |
           source .ci/ubuntu_ci.sh
@@ -30,19 +30,18 @@ jobs:
           source .ci/ubuntu_ci.sh
           create_kivy_examples_wheel
       - name: Upload kivy-examples wheel as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: linux_examples_wheel
           path: dist
 
   manylinux_wheel_create:
     env:
-      CIBW_ENVIRONMENT_LINUX: "KIVY_SPLIT_EXAMPLES=1 USE_X11=1 USE_SDL2=1 USE_PANGOFT2=0 USE_GSTREAMER=0 PKG_CONFIG_PATH=$HOME/kivy_build/lib/pkgconfig LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/kivy_build/lib"
+      CIBW_ENVIRONMENT_LINUX: "KIVY_SPLIT_EXAMPLES=1 USE_X11=1 USE_SDL2=1 USE_PANGOFT2=0 USE_GSTREAMER=0 KIVY_DEPS_ROOT=$(pwd)/kivy-dependencies"
       CIBW_BUILD_VERBOSITY_LINUX: 3
       CIBW_BUILD:  ${{ matrix.cibw_build }}
       CIBW_ARCHS: ${{ matrix.cibw_archs }}
       CIBW_BEFORE_ALL_LINUX: >
-        cp -r `pwd`/kivy_build $HOME &&
         source .ci/ubuntu_ci.sh &&
         install_build_deps
     runs-on: ubuntu-latest
@@ -57,24 +56,24 @@ jobs:
             cibw_build: 'cp37-manylinux_aarch64 cp38-manylinux_aarch64 cp39-manylinux_aarch64 cp310-manylinux_aarch64 cp311-manylinux_aarch64'
     if: github.event_name == 'schedule' || (github.event_name == 'create' && github.event.ref_type == 'tag') || contains(github.event.head_commit.message, '[build wheel]') || contains(github.event.head_commit.message, '[build wheel linux]') || contains(github.event.pull_request.title, '[build wheel]') || contains(github.event.pull_request.title, '[build wheel linux]')
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python 3.x
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.9
+        python-version: 3.x
     - name: Set up QEMU
       if: ${{ matrix.cibw_archs == 'aarch64' }}
       uses: docker/setup-qemu-action@v1
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       id: deps-cache
       with:
-        path: kivy_build
-        key: ${{ runner.os }}-${{ matrix.cibw_archs }}-deps-cache-${{ hashFiles('.ci/ubuntu_ci.sh') }}
+        path: kivy-dependencies
+        key: ${{ runner.os }}-${{ matrix.cibw_archs }}-deps-cache-${{ hashFiles('./tools/build_linux_dependencies.sh') }}
     - name: Build dependencies
       if: ${{ steps.deps-cache.outputs.cache-hit != 'true' }}
       run: |
         docker run --rm -v `pwd`:/root:rw --workdir=/root \
-           quay.io/pypa/manylinux2014_${{ matrix.cibw_archs }} bash -ec 'source .ci/ubuntu_ci.sh && build_and_install_linux_kivy_sys_deps'
+           quay.io/pypa/manylinux2014_${{ matrix.cibw_archs }} bash -ec './tools/build_linux_dependencies.sh'
     - name: Generate version metadata
       run: |
         source .ci/ubuntu_ci.sh
@@ -86,7 +85,7 @@ jobs:
       run: |
         python -m cibuildwheel --output-dir wheelhouse
     - name: Upload wheels as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: manylinux_wheels
         path: ./wheelhouse/*.whl
@@ -96,12 +95,12 @@ jobs:
     needs: [manylinux_wheel_create, kivy_examples_create]
     if: github.event_name != 'pull_request'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python 3.x
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.9
-    - uses: actions/download-artifact@v2
+        python-version: 3.x
+    - uses: actions/download-artifact@v3
       with:
         name: manylinux_wheels
         path: dist
@@ -140,12 +139,12 @@ jobs:
     env:
       DISPLAY: ':99.0'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: manylinux_wheels
         path: dist
@@ -157,7 +156,7 @@ jobs:
       run: |
         source .ci/ubuntu_ci.sh
         install_kivy_wheel dev
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: linux_examples_wheel
         path: dist
@@ -170,12 +169,12 @@ jobs:
         source .ci/ubuntu_ci.sh
         test_kivy_install
     - name: Test Kivy benchmarks
-      if: matrix.python == '3.9' && (github.event_name == 'schedule' || (github.event_name == 'create' && github.event.ref_type == 'tag'))
+      if: matrix.python == '3.x' && (github.event_name == 'schedule' || (github.event_name == 'create' && github.event.ref_type == 'tag'))
       run: |
         source .ci/ubuntu_ci.sh
         test_kivy_benchmark
     - name: Upload benchmarks as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: benchmarks
         path: .benchmarks-kivy
@@ -186,11 +185,11 @@ jobs:
       DISPLAY: ':99.0'
       KIVY_SPLIT_EXAMPLES: 0
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python 3.x
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.x
       - name: Generate sdist
         run: |
           source .ci/ubuntu_ci.sh
@@ -199,6 +198,7 @@ jobs:
         run: |
           source .ci/ubuntu_ci.sh
           install_kivy_test_run_apt_deps
+          ./tools/build_linux_dependencies.sh
           install_kivy_test_wheel_run_pip_deps
       - name: Setup env
         run: |
@@ -207,6 +207,7 @@ jobs:
       - name: Install Kivy
         run: |
           source .ci/ubuntu_ci.sh
+          export KIVY_DEPS_ROOT=$(pwd)/kivy-dependencies
           install_kivy_sdist
       - name: Test Kivy
         run: |
