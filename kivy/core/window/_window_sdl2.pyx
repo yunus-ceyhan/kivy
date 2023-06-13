@@ -75,8 +75,7 @@ cdef class _WindowSDL2Storage:
     def die(self):
         raise RuntimeError(<bytes> SDL_GetError())
 
-    def setup_window(self, x, y, width, height, borderless, fullscreen,
-                     resizable, state, gl_backend):
+    def setup_window(self, x, y, width, height, borderless, fullscreen, resizable, state, gl_backend):
         self.win_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI
 
         if resizable:
@@ -105,10 +104,18 @@ cdef class _WindowSDL2Storage:
         elif state == 'hidden':
             self.win_flags |= SDL_WINDOW_HIDDEN
 
+        show_taskbar_icon = Config.getboolean('graphics', 'show_taskbar_icon')
+        if not show_taskbar_icon:
+            self.win_flags |= SDL_WINDOW_SKIP_TASKBAR
+
         SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, b'0')
 
         SDL_SetHintWithPriority(b'SDL_ANDROID_TRAP_BACK_BUTTON', b'1',
                                 SDL_HINT_OVERRIDE)
+        
+        # makes dpi aware of scale changes
+        if platform == "win":
+            SDL_SetHint(SDL_HINT_WINDOWS_DPI_SCALING, b"1")
 
         if SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0:
             self.die()
@@ -265,13 +272,6 @@ cdef class _WindowSDL2Storage:
         cdef int w, h
         SDL_GetWindowSize(self.win, &w, &h)
         return w, h
-
-
-    def _get_display_dpi(self):
-        cdef int display_index = SDL_GetWindowDisplayIndex(self.win)
-        cdef float horizontal_dpi = 0.
-        SDL_GetDisplayDPI(display_index, NULL, &horizontal_dpi, NULL)
-        return horizontal_dpi
 
     def _set_cursor_state(self, value):
         SDL_ShowCursor(value)

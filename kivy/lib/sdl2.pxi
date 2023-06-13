@@ -256,6 +256,7 @@ cdef extern from "SDL.h":
         SDL_WINDOW_FOREIGN = 0x00000800         #            /**< window not created by SDL */
         SDL_WINDOW_FULLSCREEN_DESKTOP
         SDL_WINDOW_ALLOW_HIGHDPI
+        SDL_WINDOW_SKIP_TASKBAR = 0x00010000    #,   /**< window should not be added to the taskbar */
 
     ctypedef enum SDL_HitTestResult:
         SDL_HITTEST_NORMAL
@@ -480,6 +481,8 @@ cdef extern from "SDL.h":
     cdef char *SDL_HINT_VIDEO_WIN_D3DCOMPILER
     cdef char *SDL_HINT_ACCELEROMETER_AS_JOYSTICK
     cdef char *SDL_HINT_ANDROID_TRAP_BACK_BUTTON
+    cdef char *SDL_HINT_WINDOWS_DPI_AWARENESS
+    cdef char *SDL_HINT_WINDOWS_DPI_SCALING
 
     cdef int SDL_QUERY               = -1
     cdef int SDL_IGNORE              =  0
@@ -552,7 +555,6 @@ cdef extern from "SDL.h":
     cdef SDL_GLContext SDL_GL_CreateContext(SDL_Window* window)
     cdef int SDL_GetNumVideoDisplays()
     cdef int SDL_GetNumDisplayModes(int displayIndex)
-    cdef int SDL_GetDisplayDPI(int displayIndex, float * ddpi, float * hdpi, float * vdpi);
     cdef int SDL_GetDisplayMode(int displayIndex, int index, SDL_DisplayMode * mode)
     cdef SDL_bool SDL_HasIntersection(SDL_Rect * A, SDL_Rect * B) nogil
     cdef SDL_bool SDL_IntersectRect(SDL_Rect * A, SDL_Rect * B, SDL_Rect * result) nogil
